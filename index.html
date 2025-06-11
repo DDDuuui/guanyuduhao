@@ -1,0 +1,3115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>奔跑体验</title>
+  <audio id="bgMusic" src="Music.mp3" autoplay loop style="display: none;"></audio>
+  
+  <!-- 抖音API集成 -->
+  <script src="douyin-config.js"></script>
+  <script src="douyin-api.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=Long+Cang&display=swap');
+    
+    body, html {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #111;
+      color: #fff;
+      font-family: 'Inter', 'Noto Sans SC', '微软雅黑', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* 前情提要页面样式 */
+    #preface {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      overflow: hidden;
+    }
+
+    #preface::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 30% 20%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 80%, rgba(72, 219, 251, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 20% 80%, rgba(254, 202, 87, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .preface-content {
+      text-align: center;
+      max-width: 80%;
+      z-index: 1;
+    }
+
+    .preface-line {
+      font-family: 'Long Cang', '华文行楷', '楷体', serif;
+      font-size: 2.2rem;
+      font-weight: 600;
+      line-height: 1.8;
+      margin: 1.5rem 0;
+      background: linear-gradient(135deg, #ffffff 0%, #ffd700 30%, #ffeb3b 60%, #fff176 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeInUp 1s ease-out forwards;
+    }
+
+    .preface-line:nth-child(1) {
+      animation-delay: 0.5s;
+    }
+
+    .preface-line:nth-child(2) {
+      animation-delay: 1s;
+    }
+
+    .preface-line:nth-child(3) {
+      animation-delay: 1.5s;
+    }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .progress-container {
+      position: absolute;
+      bottom: 8%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      max-width: 500px;
+      text-align: center;
+    }
+
+    .progress-text {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #ffffff;
+      margin-bottom: 1rem;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out 2.5s forwards;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out 2.5s forwards;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #ff6b6b 0%, #feca57 50%, #48dbfb 100%);
+      border-radius: 10px;
+      width: 0;
+      animation: progressFill 8s linear 3s forwards;
+      box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes progressFill {
+      to {
+        width: 100%;
+      }
+    }
+
+    @keyframes prefaceFadeOut {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+    }
+
+    .preface-fadeout {
+      animation: prefaceFadeOut 0.8s ease-in-out forwards;
+    }
+
+    /* 我已知晓按钮样式 */
+    .acknowledge-btn {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 500;
+      padding: 0.8rem 2rem;
+      margin-top: 2rem;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: #ffffff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.5s ease-out 2s forwards;
+    }
+
+    .acknowledge-btn:hover {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .acknowledge-btn:active {
+      transform: translateY(0);
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .preface-line {
+        font-size: 1.8rem;
+        margin: 1.2rem 0;
+      }
+      
+      .progress-container {
+        width: 80%;
+      }
+      
+      .progress-text {
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .preface-line {
+        font-size: 1.5rem;
+        margin: 1rem 0;
+      }
+    }
+
+    /* 原有样式保持不变 */
+    #container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-image: url('SSS.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    #startBtn {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      font-weight: 600;
+      padding: 1.2rem 2.5rem;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #ff9ff3 100%);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 10;
+      box-shadow: 0 4px 20px rgba(255, 107, 107, 0.5);
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    #startBtn:hover {
+      background: linear-gradient(135deg, #ff5252 0%, #ffb74d 50%, #f48fb1 100%);
+      transform: translate(-50%, -50%) translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7);
+    }
+    #tip {
+      position: absolute;
+      left: 50%;
+      top: 5%;
+      transform: translateX(-50%);
+      font-size: 1.4rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #ffd700 0%, #ffeb3b 30%, #fff59d 60%, #ffffff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: none;
+      z-index: 10;
+      padding: 1.2rem 2.5rem;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 80%;
+      letter-spacing: 0.3px;
+      backdrop-filter: blur(10px);
+      background-color: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 215, 0, 0.5);
+      box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+      text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+    }
+    
+    #tip::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 12px;
+      z-index: -1;
+    }
+    
+    #speechResult {
+      position: absolute;
+      left: 50%;
+      top: 55%;
+      transform: translateX(-50%);
+      font-size: 1.2rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #ffffff 0%, #ffd700 40%, #ffeb3b 70%, #fff176 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: none;
+      z-index: 10;
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+      max-width: 70%;
+      letter-spacing: 0.2px;
+      backdrop-filter: blur(8px);
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 215, 0, 0.5);
+      box-shadow: 0 2px 15px rgba(255, 215, 0, 0.4);
+      text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+    }
+    
+    #speechResult::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 8px;
+      z-index: -1;
+      box-shadow: inset 0 1px 3px rgba(255, 215, 0, 0.3);
+    }
+    
+    #bigWord {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 8rem;
+      font-weight: 800;
+      background: linear-gradient(45deg, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #ff9ff3 75%, #54a0ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: #ff6b6b; /* 备用颜色，如果渐变不支持 */
+      display: none;
+      z-index: 1000;
+      text-align: center;
+      pointer-events: none;
+      text-shadow: 0 0 30px rgba(255, 107, 107, 0.6);
+      animation: bigWordPulse 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      white-space: nowrap;
+      letter-spacing: 0.1em;
+    }
+    
+    @keyframes bigWordPulse {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, 50%) scale(0.5);
+      }
+      30% {
+        opacity: 1;
+        transform: translate(-50%, -30%) scale(1.1);
+      }
+      60% {
+        opacity: 1;
+        transform: translate(-50%, -45%) scale(1.05);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+    
+    @keyframes bigWordFadeOut {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+      }
+    }
+    .video-layer {
+      position: absolute;
+      left: 50%;
+      top: 25%;
+      transform: translate(-50%, -50%);
+      width: 80vw;
+      max-width: 800px;
+      height: auto;
+      background: #000;
+      outline: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+      opacity: 0;
+      z-index: 1;
+      pointer-events: none;
+      transition: opacity 0.15s ease-in-out;
+    }
+    .video-active {
+      opacity: 1 !important;
+      z-index: 2;
+      pointer-events: auto;
+    }
+
+    /* 语音输入面板样式 */
+    #voiceInputPanel {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 350px;
+      max-height: 400px;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(30, 30, 50, 0.9) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      z-index: 1001;
+      display: none;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .voice-panel-header {
+      padding: 15px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .voice-panel-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin: 0;
+    }
+
+    .voice-panel-close {
+      background: none;
+      border: none;
+      color: #ffffff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: background-color 0.2s ease;
+    }
+
+    .voice-panel-close:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .voice-panel-content {
+      padding: 20px;
+    }
+
+    .voice-input-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .voice-btn {
+      flex: 1;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #ffffff;
+    }
+
+    .voice-start-btn {
+      background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+    }
+
+    .voice-start-btn:hover {
+      background: linear-gradient(135deg, #ff5252 0%, #ffb74d 100%);
+      transform: translateY(-1px);
+    }
+
+    .voice-start-btn:disabled {
+      background: #666;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .voice-stop-btn {
+      background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
+    }
+
+    .voice-stop-btn:hover {
+      background: linear-gradient(135deg, #ff3742 0%, #ff2f2f 100%);
+      transform: translateY(-1px);
+    }
+
+    .voice-clear-btn {
+      background: linear-gradient(135deg, #747d8c 0%, #57606f 100%);
+    }
+
+    .voice-clear-btn:hover {
+      background: linear-gradient(135deg, #636e7b 0%, #4a545f 100%);
+      transform: translateY(-1px);
+    }
+
+    .voice-status {
+      margin-bottom: 15px;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: #ffffff;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .voice-status.listening {
+      background: linear-gradient(135deg, rgba(72, 219, 251, 0.2) 0%, rgba(99, 230, 190, 0.2) 100%);
+      border-color: rgba(72, 219, 251, 0.5);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .voice-content {
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .voice-item {
+      margin-bottom: 10px;
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: #ffffff;
+      border-left: 3px solid #48dbfb;
+    }
+
+    .voice-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .voice-item .timestamp {
+      font-size: 0.75rem;
+      color: #aaa;
+      margin-bottom: 3px;
+    }
+
+    .voice-item .content {
+      color: #ffffff;
+    }
+
+
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      #voiceInputPanel {
+        width: calc(100vw - 40px);
+        left: 20px;
+        right: 20px;
+      }
+    }
+
+    /* 打字输入区域样式 */
+    #textInputArea {
+      position: fixed;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 800px;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(30, 30, 50, 0.9) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 15px;
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      z-index: 999;
+      display: none;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+    }
+
+    .text-input-header {
+      padding: 15px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .text-input-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin: 0;
+    }
+
+    .text-input-close {
+      background: none;
+      border: none;
+      color: #ffffff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: background-color 0.2s ease;
+    }
+
+    .text-input-close:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .text-input-content {
+      padding: 20px;
+    }
+
+    .text-input-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    #textInputField {
+      flex: 1;
+      padding: 12px 15px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    #textInputField:focus {
+      border-color: rgba(72, 219, 251, 0.6);
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 0 2px rgba(72, 219, 251, 0.2);
+    }
+
+    #textInputField::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .text-send-btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #48dbfb 0%, #0abde3 100%);
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 80px;
+    }
+
+    .text-send-btn:hover {
+      background: linear-gradient(135deg, #0abde3 0%, #006ba6 100%);
+      transform: translateY(-1px);
+    }
+
+    .text-send-btn:disabled {
+      background: #666;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .text-clear-btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #747d8c 0%, #57606f 100%);
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 80px;
+    }
+
+    .text-clear-btn:hover {
+      background: linear-gradient(135deg, #636e7b 0%, #4a545f 100%);
+      transform: translateY(-1px);
+    }
+
+    .text-history {
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .text-item {
+      margin-bottom: 10px;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      color: #ffffff;
+      border-left: 3px solid #48dbfb;
+      word-wrap: break-word;
+    }
+
+    .text-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .text-item .timestamp {
+      font-size: 0.75rem;
+      color: #aaa;
+      margin-bottom: 5px;
+    }
+
+    .text-item .content {
+      color: #ffffff;
+    }
+
+    /* 打字输入触发按钮 */
+    #textInputToggle {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 25px;
+      border: none;
+      border-radius: 25px;
+      background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      z-index: 998;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(254, 202, 87, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #textInputToggle:hover {
+      background: linear-gradient(135deg, #ffb74d 0%, #f48fb1 100%);
+      transform: translateX(-50%) translateY(-2px);
+      box-shadow: 0 6px 20px rgba(254, 202, 87, 0.6);
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      #textInputArea {
+        width: calc(100vw - 20px);
+        bottom: 80px;
+      }
+
+      .text-input-form {
+        flex-direction: column;
+      }
+
+      .text-send-btn,
+      .text-clear-btn {
+        width: 100%;
+      }
+
+      #textInputToggle {
+        bottom: 10px;
+        padding: 10px 20px;
+        font-size: 0.9rem;
+      }
+    }
+
+    /* 统计页面样式 */
+    #statisticsPage {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-image: url('SSS.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      overflow: hidden;
+    }
+
+    #statisticsPage::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: -1;
+    }
+
+    .statistics-content {
+      text-align: center;
+      max-width: 90%;
+      z-index: 1;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(30, 30, 50, 0.8) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 20px;
+      padding: 3rem 2.5rem;
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      transform: translateY(50px);
+      animation: statisticsFadeIn 1s ease-out 0.5s forwards;
+    }
+
+    @keyframes statisticsFadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .statistics-title {
+      font-family: 'Long Cang', '华文行楷', '楷体', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ffd700 0%, #ffeb3b 30%, #fff59d 60%, #ffffff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 2rem;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    }
+
+    .statistics-count {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(45deg, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #ff9ff3 75%, #54a0ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 1.5rem 0;
+      text-shadow: 0 0 30px rgba(255, 107, 107, 0.6);
+    }
+
+    .statistics-words {
+      font-size: 1.3rem;
+      font-weight: 500;
+      color: #ffffff;
+      margin: 2rem 0;
+      line-height: 1.6;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .statistics-words .words-list {
+      color: #ffd700;
+      font-weight: 600;
+      margin: 0.5rem 0;
+    }
+
+    .statistics-comparison {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin: 2rem 0;
+      line-height: 1.8;
+    }
+
+    .statistics-comparison .highlight {
+      background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+      font-size: 1.1em;
+    }
+
+    .statistics-button {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      padding: 1rem 2.5rem;
+      margin-top: 2rem;
+      background: linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #ff9ff3 100%);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(255, 107, 107, 0.5);
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .statistics-button:hover {
+      background: linear-gradient(135deg, #ff5252 0%, #ffb74d 50%, #f48fb1 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7);
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .statistics-content {
+        padding: 2rem 1.5rem;
+        max-width: 95%;
+      }
+
+      .statistics-title {
+        font-size: 2rem;
+      }
+
+      .statistics-count {
+        font-size: 2.5rem;
+      }
+
+      .statistics-words {
+        font-size: 1.1rem;
+        padding: 1rem;
+      }
+
+      .statistics-comparison {
+        font-size: 1.2rem;
+      }
+
+      .statistics-button {
+        font-size: 1rem;
+        padding: 0.8rem 2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .statistics-title {
+        font-size: 1.6rem;
+      }
+
+      .statistics-count {
+        font-size: 2rem;
+      }
+
+      .statistics-words {
+        font-size: 1rem;
+      }
+
+      .statistics-comparison {
+        font-size: 1.1rem;
+      }
+    }
+
+    /* 视频展示页面样式 */
+    #videoDisplayPage {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-image: url('SSS.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      display: none;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      z-index: 10000;
+      overflow-y: auto;
+      padding: 2rem 0;
+      box-sizing: border-box;
+    }
+
+    #videoDisplayPage::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: -1;
+    }
+
+    .video-display-content {
+      width: 90%;
+      max-width: 1400px;
+      margin: 0 auto;
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+
+    .video-display-title {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #ff9ff3 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 4px 15px rgba(255, 107, 107, 0.5);
+    }
+
+    .video-display-subtitle {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 400;
+      color: #cccccc;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2.5rem;
+      margin-bottom: 3rem;
+      justify-items: center;
+      padding: 0 1rem;
+    }
+
+    .video-item {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 1.2rem;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+      width: 100%;
+      max-width: 450px;
+      margin: 0.5rem;
+    }
+
+    .video-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+    }
+
+    .video-item video {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .video-item-title {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #ffffff;
+      background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .user-said-video {
+      border: 2px solid #ff6b6b;
+      box-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+    }
+
+    .user-said-video .video-item-title {
+      background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+    }
+
+    .video-display-actions {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .action-button {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #ff9ff3 100%);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(255, 107, 107, 0.5);
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .action-button:hover {
+      background: linear-gradient(135deg, #ff5252 0%, #ffb74d 50%, #f48fb1 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7);
+    }
+
+    /* 致谢部分样式 */
+    .acknowledgments {
+      margin-top: 5rem;
+      padding: 3rem 2rem;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .acknowledgments-title {
+      font-family: 'Long Cang', '华文行楷', '楷体', serif;
+      font-size: 2rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, #ffd700 0%, #ffeb3b 30%, #fff59d 60%, #ffffff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    }
+
+    .acknowledgments-item {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: #cccccc;
+      margin: 1rem 0;
+      padding: 0.8rem 1.5rem;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+      display: inline-block;
+      margin: 0.5rem;
+      min-width: 120px;
+    }
+
+    .acknowledgments-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+    }
+
+    /* 响应式设计 - 视频展示页面 */
+    @media (max-width: 1200px) {
+      .video-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+      }
+      
+      .video-item {
+        max-width: 400px;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .video-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.8rem;
+      }
+      
+      .video-item {
+        max-width: 350px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .video-display-title {
+        font-size: 2rem;
+      }
+
+      .video-display-subtitle {
+        font-size: 1.3rem;
+        margin-bottom: 2rem;
+      }
+
+      .video-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 0 0.5rem;
+      }
+
+      .video-item {
+        max-width: 100%;
+        margin: 0.8rem 0;
+      }
+
+      .video-display-actions {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .action-button {
+        width: 200px;
+      }
+
+      .acknowledgments {
+        margin-top: 3rem;
+        padding: 2rem 1rem;
+      }
+
+      .acknowledgments-title {
+        font-size: 1.6rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .acknowledgments-item {
+        font-size: 1rem;
+        padding: 0.6rem 1rem;
+        margin: 0.3rem;
+        min-width: 100px;
+      }
+    }
+  </style>
+</head>
+  <body>
+    <div id="preface">
+      <div class="preface-content">
+        <div class="preface-line">本网站接入DouyinAPI</div>
+        <div class="preface-line">本网站由openAI负责语音情绪识别</div>
+        <div class="preface-line">本网站需翻墙才可允许麦克风权限</div>
+        <div class="preface-line">动画若出现交互卡顿，恳请重开尝试</div>
+        <button class="acknowledge-btn" id="acknowledgeBtn">我已知晓</button>
+      </div>
+      <div class="progress-container">
+        <div class="progress-text" id="countdown-text">正在加载... (8秒)</div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar" id="progress-fill"></div>
+        </div>
+      </div>
+    </div>
+  <!-- 语音输入功能 -->
+  <div id="voiceInputPanel">
+    <div class="voice-panel-header">
+      <h3 class="voice-panel-title">语音输入</h3>
+      <button class="voice-panel-close" id="voicePanelClose">×</button>
+    </div>
+    <div class="voice-panel-content">
+      <div class="voice-input-controls">
+        <button class="voice-btn voice-start-btn" id="voiceStartBtn">开始录音</button>
+        <button class="voice-btn voice-stop-btn" id="voiceStopBtn" disabled>停止录音</button>
+        <button class="voice-btn voice-clear-btn" id="voiceClearBtn">清除记录</button>
+      </div>
+      <div class="voice-status" id="voiceStatus">点击"开始录音"开始语音输入</div>
+      <div class="voice-content" id="voiceContent">
+        <div style="text-align: center; color: #aaa; font-size: 0.8rem; padding: 20px;">暂无语音记录</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 打字输入功能 -->
+  <button id="textInputToggle" title="打字输入">✏️ 打字输入</button>
+  <div id="textInputArea">
+    <div class="text-input-header">
+      <h3 class="text-input-title">文字输入</h3>
+      <button class="text-input-close" id="textInputClose">×</button>
+    </div>
+    <div class="text-input-content">
+      <div class="text-input-form">
+                 <input type="text" id="textInputField" placeholder="输入鼓励的话来触发游戏交互，也可以说安慰的话如"世界只是个草台班子"..." />
+        <button class="text-send-btn" id="textSendBtn">发送</button>
+        <button class="text-clear-btn" id="textClearBtn">清除</button>
+      </div>
+      <div class="text-history" id="textHistory">
+        <div style="text-align: center; color: #aaa; font-size: 0.8rem; padding: 20px;">暂无文字记录</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="container">
+    <button id="startBtn">开始奔跑</button>
+    <video id="videoA" src="flash/A.mp4" playsinline preload="auto" muted class="video-layer"></video>
+    <video id="videoB" src="flash/B.mp4" playsinline preload="auto" muted class="video-layer"></video>
+    <video id="videoC" src="flash/C.mp4" playsinline preload="auto" muted class="video-layer"></video>
+    <video id="videoE" src="flash/E.mp4" playsinline preload="auto" muted class="video-layer"></video>
+    <video id="videoF" src="flash/F.mp4" playsinline preload="auto" muted class="video-layer"></video>
+    <video id="videoG" src="flash/G.mp4" playsinline preload="auto" muted class="video-layer"></video>
+    <div id="bigWord"></div>
+    <div id="tip">请说话来继续奔跑！</div>
+    <div id="speechResult">等待语音输入...</div>
+  </div>
+
+  <!-- 统计页面 -->
+  <div id="statisticsPage">
+    <div class="statistics-content">
+      <div class="statistics-title">游戏统计</div>
+      <div class="statistics-count" id="encouragementCountDisplay">0次</div>
+      <div class="statistics-words">
+        你刚刚一共说出了鼓励的话语：
+        <div class="words-list" id="wordsListDisplay">暂无记录</div>
+      </div>
+      <div class="statistics-comparison" id="comparisonDisplay">
+        约等于现实中一个中国网民在社交媒体上<br>
+        累计<span class="highlight">0年0个月</span>说出的鼓励性话语的次数
+      </div>
+      <button class="statistics-button" onclick="goToNextPage()">下一步</button>
+    </div>
+  </div>
+
+  <!-- 视频展示页面 -->
+  <div id="videoDisplayPage">
+    <div class="video-display-content">
+      <div class="video-display-title">你的鼓励时刻</div>
+      <div class="video-display-subtitle">以下是根据你说过的鼓励话语制作的专属视频集锦</div>
+      <div class="video-grid" id="videoGrid">
+        <!-- 视频将动态添加到这里 -->
+      </div>
+      <div class="video-display-actions">
+        <button class="action-button" onclick="restartGame()">重新开始</button>
+        <button class="action-button" onclick="goBackToStats()">返回统计</button>
+      </div>
+      
+      <!-- 致谢部分 -->
+      <div class="acknowledgments">
+        <div class="acknowledgments-title">感谢</div>
+        <div class="acknowledgments-item">Cursor</div>
+        <div class="acknowledgments-item">Open AI</div>
+        <div class="acknowledgments-item">VsCode</div>
+        <div class="acknowledgments-item">Blender</div>
+        <div class="acknowledgments-item">Tripo</div>
+        <div class="acknowledgments-item">即梦AI</div>
+        <div class="acknowledgments-item">剪映</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // 前情提要页面控制
+    let countdownTimer;
+    let currentSeconds = 8;
+    
+    function startPreface() {
+      const prefaceElement = document.getElementById('preface');
+      const countdownText = document.getElementById('countdown-text');
+      const acknowledgeBtn = document.getElementById('acknowledgeBtn');
+      
+      // 开始倒计时
+      countdownTimer = setInterval(() => {
+        currentSeconds--;
+        countdownText.textContent = `正在加载... (${currentSeconds}秒)`;
+        
+        if (currentSeconds <= 0) {
+          clearInterval(countdownTimer);
+          hidePrefacePage(prefaceElement);
+        }
+      }, 1000);
+
+      // 添加"我已知晓"按钮点击事件
+      acknowledgeBtn.addEventListener('click', () => {
+        clearInterval(countdownTimer);
+        hidePrefacePage(prefaceElement);
+      });
+    }
+
+    // 隐藏前情提要页面的函数
+    function hidePrefacePage(prefaceElement) {
+      // 添加淡出动画
+      prefaceElement.classList.add('preface-fadeout');
+      
+      // 等待动画完成后隐藏前情提要页面
+      setTimeout(() => {
+        prefaceElement.style.display = 'none';
+      }, 800);
+    }
+    
+    // 页面加载完成后启动前情提要
+    window.addEventListener('load', async () => {
+      startPreface();
+      
+      // 初始化抖音API
+      try {
+        if (typeof douyinAPI !== 'undefined') {
+          await douyinAPI.init();
+          console.log('抖音API集成已启用');
+        }
+      } catch (error) {
+        console.log('抖音API初始化跳过:', error.message);
+      }
+    });
+    
+    const startBtn = document.getElementById('startBtn');
+    const videoA = document.getElementById('videoA');
+    const videoB = document.getElementById('videoB');
+    const videoC = document.getElementById('videoC');
+    const videoE = document.getElementById('videoE');
+    const videoF = document.getElementById('videoF');
+    const videoG = document.getElementById('videoG');
+    const tip = document.getElementById('tip');
+    const speechResult = document.getElementById('speechResult');
+    const bigWord = document.getElementById('bigWord');
+    let recognition;
+    let isRecognitionInitialized = false;
+    
+    // 语音输入面板相关变量
+    let voiceInputRecognition;
+    let voiceInputRecords = [];
+    let isVoiceInputListening = false;
+    
+    // 打字输入相关变量
+    let textInputRecords = [];
+    let hasTriggeredVideoE = false; // 标志是否已经触发了视频E
+    let hasTriggeredVideoC = false; // 标志是否已经触发了视频C
+    let quickTriggerTimer = null; // 快速触发计时器
+    let speechTimer = null; // 语音识别超时计时器
+    
+    // 鼓励话语统计
+    let encouragementCount = 0; // 鼓励话语总次数
+    let encouragementWords = []; // 记录具体说过的鼓励词汇
+
+    // 记录鼓励话语的函数
+    function recordEncouragement(matchedWords, originalText) {
+      encouragementCount++;
+      
+      // 确定要显示的词汇
+      let displayWord = '';
+      if (matchedWords.length === 1) {
+        displayWord = matchedWords[0];
+      } else if (originalText && originalText.length <= 10) {
+        // 如果用户说的内容很短，直接显示原文
+        displayWord = originalText;
+      } else {
+        // 显示主要的匹配词汇
+        displayWord = matchedWords[0];
+      }
+      
+      // 避免重复记录完全相同的词汇
+      if (!encouragementWords.includes(displayWord)) {
+        encouragementWords.push(displayWord);
+      }
+      
+      console.log('记录鼓励话语:', displayWord, '总次数:', encouragementCount);
+    }
+
+    // 显示统计页面的函数
+    function showStatisticsPage() {
+      // 隐藏所有视频和游戏元素
+      [videoA, videoB, videoC, videoE, videoF, videoG].forEach(v => {
+        v.classList.remove('video-active');
+        v.pause();
+      });
+      tip.style.display = 'none';
+      speechResult.style.display = 'none';
+      bigWord.style.display = 'none';
+      document.getElementById('container').style.display = 'none';
+      
+      // 更新统计信息
+      updateStatisticsDisplay();
+      
+      // 显示统计页面
+      document.getElementById('statisticsPage').style.display = 'flex';
+    }
+
+    // 更新统计页面显示内容的函数
+    function updateStatisticsDisplay() {
+      const countDisplay = document.getElementById('encouragementCountDisplay');
+      const wordsDisplay = document.getElementById('wordsListDisplay');
+      const comparisonDisplay = document.getElementById('comparisonDisplay');
+      
+      // 更新次数显示
+      countDisplay.textContent = encouragementCount + '次';
+      
+      // 更新词汇列表显示
+      if (encouragementWords.length > 0) {
+        // 限制显示的词汇数量，避免过长
+        const displayWords = encouragementWords.slice(0, 8); // 最多显示8个词汇
+        let wordsText = displayWords.map(word => `"${word}"`).join('、');
+        if (encouragementWords.length > 8) {
+          wordsText += '...';
+        }
+        wordsDisplay.textContent = wordsText;
+      } else {
+        wordsDisplay.textContent = '暂无记录';
+      }
+      
+      // 计算等效时间（每3个月1次）
+      const monthsEquivalent = encouragementCount * 3;
+      const years = Math.floor(monthsEquivalent / 12);
+      const months = monthsEquivalent % 12;
+      
+      let timeText = '';
+      if (years > 0) {
+        timeText += years + '年';
+      }
+      if (months > 0) {
+        timeText += months + '个月';
+      }
+      if (timeText === '') {
+        timeText = '不到1个月';
+      }
+      
+      comparisonDisplay.innerHTML = `
+        约等于现实中一个中国网民在社交媒体上<br>
+        累计<span class="highlight">${timeText}</span>说出的鼓励性话语的次数
+      `;
+    }
+
+    // 跳转到下一页（视频展示页面）的函数
+    function goToNextPage() {
+      // 隐藏统计页面
+      document.getElementById('statisticsPage').style.display = 'none';
+      
+      // 显示视频展示页面并生成视频
+      showVideoDisplayPage();
+    }
+
+    // 返回统计页面的函数
+    function goBackToStats() {
+      // 隐藏视频展示页面
+      document.getElementById('videoDisplayPage').style.display = 'none';
+      
+      // 显示统计页面
+      document.getElementById('statisticsPage').style.display = 'flex';
+    }
+
+    // 显示视频展示页面的函数
+    function showVideoDisplayPage() {
+      const videoDisplayPage = document.getElementById('videoDisplayPage');
+      const videoGrid = document.getElementById('videoGrid');
+      
+      // 更新页面标题和副标题
+      const titleElement = document.querySelector('.video-display-title');
+      const subtitleElement = document.querySelector('.video-display-subtitle');
+      
+      titleElement.textContent = `你刚才发送了${encouragementCount}句鼓励`;
+      subtitleElement.textContent = `弹指之间，足以用来鼓励${encouragementCount}个陌生人`;
+      
+      // 清空视频网格
+      videoGrid.innerHTML = '';
+      
+      // 如果用户没有说过鼓励话语，显示提示
+      if (encouragementWords.length === 0) {
+        videoGrid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #cccccc; font-size: 1.2rem;">
+            你还没有说过鼓励话语呢！<br>
+            重新开始游戏，试着说些鼓励的话吧！
+          </div>
+        `;
+      } else {
+        // 根据用户说过的词语生成视频
+        generateVideoGrid();
+      }
+      
+      // 显示视频展示页面
+      videoDisplayPage.style.display = 'flex';
+    }
+
+    // 生成视频网格的函数
+    function generateVideoGrid() {
+      const videoGrid = document.getElementById('videoGrid');
+      const availableVideos = [
+        '加油.mp4',
+        '你可以的.mp4', 
+        '你很棒.mp4',
+        '你很厉害.mp4',
+        '坚持一下.mp4',
+        '加油加油.mp4',
+        '你已经做的很好了.mp4',
+        '你真棒.mp4',
+        '世界只是个草台班子.mp4'
+      ];
+      
+      const userSaidWords = new Set(); // 用户说过的词语对应的视频
+      
+      // 词语映射表
+      const wordMapping = {
+        '加油': '加油.mp4',
+        '你可以': '你可以的.mp4',
+        '可以': '你可以的.mp4',
+        '你很棒': '你很棒.mp4',
+        '很棒': '你很棒.mp4',
+        '棒': '你很棒.mp4',
+        '你很厉害': '你很厉害.mp4',
+        '很厉害': '你很厉害.mp4',
+        '厉害': '你很厉害.mp4',
+        '坚持': '坚持一下.mp4',
+        '坚持一下': '坚持一下.mp4',
+        '你真棒': '你真棒.mp4',
+        '真棒': '你真棒.mp4',
+        '好了': '你已经做的很好了.mp4',
+        '很好': '你已经做的很好了.mp4',
+        '做得好': '你已经做的很好了.mp4',
+        '世界只是个草台班子': '世界只是个草台班子.mp4',
+        '草台班子': '世界只是个草台班子.mp4'
+      };
+      
+      // 查找用户说过的词语对应的视频
+      encouragementWords.forEach(word => {
+        // 首先尝试精确匹配
+        let matchingVideo = availableVideos.find(video => {
+          const videoName = video.replace('.mp4', '');
+          return videoName === word;
+        });
+        
+        // 如果没有精确匹配，尝试部分匹配
+        if (!matchingVideo) {
+          matchingVideo = availableVideos.find(video => {
+            const videoName = video.replace('.mp4', '');
+            return videoName.includes(word) || word.includes(videoName);
+          });
+        }
+        
+        // 使用词语映射
+        if (!matchingVideo) {
+          matchingVideo = wordMapping[word];
+        }
+        
+        if (matchingVideo) {
+          userSaidWords.add(matchingVideo);
+        }
+      });
+      
+      // 只显示用户说过的词语对应的视频
+      userSaidWords.forEach(video => {
+        const videoItem = document.createElement('div');
+        videoItem.className = 'video-item user-said-video';
+        
+        const videoName = video.replace('.mp4', '');
+        
+        videoItem.innerHTML = `
+          <video autoplay muted loop preload="auto">
+            <source src="flash2/${video}" type="video/mp4">
+            您的浏览器不支持视频播放。
+          </video>
+          <div class="video-item-title">"${videoName}"</div>
+        `;
+        
+        videoGrid.appendChild(videoItem);
+      });
+    }
+
+    // 重新开始游戏的函数
+    function restartGame() {
+      // 重置统计数据
+      encouragementCount = 0;
+      encouragementWords = [];
+      hasTriggeredVideoE = false;
+      hasTriggeredVideoC = false;
+      
+      // 清除计时器
+      if (quickTriggerTimer) {
+        clearTimeout(quickTriggerTimer);
+        quickTriggerTimer = null;
+      }
+      if (speechTimer) {
+        clearTimeout(speechTimer);
+        speechTimer = null;
+      }
+      
+      // 停止语音识别
+      if (recognition && isRecognitionInitialized) {
+        recognition.stop();
+      }
+      
+      // 隐藏所有页面
+      document.getElementById('statisticsPage').style.display = 'none';
+      document.getElementById('videoDisplayPage').style.display = 'none';
+      
+      // 显示游戏容器
+      document.getElementById('container').style.display = 'block';
+      
+      // 重置游戏状态
+      hideAll();
+      document.getElementById('startBtn').style.display = 'block';
+    }
+
+    function showVideo(video) {
+      // 先显示新视频（会有叠化效果）
+      video.classList.add('video-active');
+      
+      // 延迟一点时间后隐藏和暂停其他视频，制造叠化效果
+      setTimeout(() => {
+        [videoA, videoB, videoC, videoE, videoF, videoG].forEach(v => {
+          if (v !== video) {
+            v.classList.remove('video-active');
+            v.pause();
+          }
+        });
+      }, 75); // 叠化效果持续时间的一半
+    }
+
+    function playVideoA() {
+      videoA.currentTime = 0;
+      showVideo(videoA);
+      videoA.play();
+      setTimeout(() => {
+        tip.textContent = '请说话或打字输入鼓励的话来为角色加油！也可以说一些安慰的话比如"你可以的"、"你很棒"等！';
+        tip.style.display = 'block';
+        speechResult.style.display = 'block';
+        speechResult.textContent = '等待语音或文字输入...';
+        startSpeechRecognition();
+      }, 3000);
+    }
+
+    function playVideoB() {
+      hasTriggeredVideoC = false; // 重置标志
+      videoB.currentTime = 0;
+      showVideo(videoB);
+      videoB.play();
+      
+      // 视频B结束时的处理
+      videoB.onended = function() {
+        console.log('视频B播放结束，hasTriggeredVideoC =', hasTriggeredVideoC);
+        // 停止语音识别
+        if (recognition) {
+          recognition.stop();
+        }
+        if (!hasTriggeredVideoC) {
+          console.log('用户未触发视频C，播放视频G');
+          // 如果用户还没有触发视频C，播放隐藏视频G
+          playVideoG();
+        } else {
+          console.log('用户已触发视频C，不需要额外处理');
+        }
+      };
+      
+      setTimeout(() => {
+        tip.textContent = '请继续说话或打字输入鼓励的话来让角色加速！也可以说安慰的话比如"你可以的"、"你很棒"等！';
+        tip.style.display = 'block';
+        speechResult.textContent = '等待语音或文字输入...';
+        startSpeechRecognitionForC();
+      }, 3000);
+    }
+
+    function playVideoC() {
+      hasTriggeredVideoE = false; // 重置标志
+      console.log('playVideoC: 重置 hasTriggeredVideoE =', hasTriggeredVideoE);
+      
+      // 清除之前的计时器
+      if (quickTriggerTimer) {
+        clearTimeout(quickTriggerTimer);
+        quickTriggerTimer = null;
+      }
+      
+      videoC.currentTime = 0;
+      showVideo(videoC);
+      videoC.play();
+      
+      // 视频开始播放后立即启动快速触发计时器：2秒内没有说"加油"就触发视频G
+      quickTriggerTimer = setTimeout(() => {
+        console.log('2秒内用户未说"加油"，快速触发视频G');
+        if (!hasTriggeredVideoE) {
+          // 停止语音识别
+          if (recognition) {
+            recognition.stop();
+          }
+          // 停止视频C
+          videoC.pause();
+          // 播放视频G
+          playVideoG();
+        }
+      }, 2000);
+      
+      // 视频结束时的处理
+      videoC.onended = function() {
+        console.log('视频C播放结束，hasTriggeredVideoE =', hasTriggeredVideoE);
+        // 清除快速触发计时器
+        if (quickTriggerTimer) {
+          clearTimeout(quickTriggerTimer);
+          quickTriggerTimer = null;
+        }
+        // 停止语音识别
+        if (recognition) {
+          recognition.stop();
+        }
+        if (!hasTriggeredVideoE) {
+          console.log('用户未触发视频E，播放视频G');
+          // 如果用户还没有触发视频E，播放隐藏视频G
+          playVideoG();
+        } else {
+          console.log('用户已触发视频E，不播放视频G');
+        }
+      };
+      
+      setTimeout(() => {
+        tip.textContent = '请说话或打字"加油"让角色滑铲！';
+        tip.style.display = 'block';
+        speechResult.textContent = '等待语音或文字输入...';
+        startSpeechRecognitionForE();
+      }, 500); // 减少延迟，快速显示提示
+    }
+
+    function playVideoE() {
+      videoE.currentTime = 0;
+      showVideo(videoE);
+      videoE.play();
+      videoE.onended = function() {
+        tip.textContent = '请说话或打字"跳过去"让角色跳跃！';
+        tip.style.display = 'block';
+        speechResult.textContent = '等待语音或文字输入...';
+        startSpeechRecognitionForF();
+      };
+    }
+
+    function playVideoF() {
+      videoF.currentTime = 0;
+      showVideo(videoF);
+      videoF.play();
+      
+      // 视频F结束后显示统计页面
+      videoF.onended = function() {
+        // 延迟一下再显示统计页面，让视频结束更自然
+        setTimeout(() => {
+          showStatisticsPage();
+        }, 1000);
+      };
+    }
+
+    function playVideoG() {
+      videoG.currentTime = 0;
+      showVideo(videoG);
+      videoG.play();
+      
+      // 立即显示提示词，与视频同步出现
+      tip.textContent = '角色开始跑慢了！快说话或打字鼓励的话让他继续跑起来！也可以说安慰的话比如"你可以的"、"你很好"等！';
+      tip.style.display = 'block';
+      speechResult.style.display = 'block';
+      speechResult.textContent = '等待语音或文字输入...';
+      
+      // 稍微延迟一下开始语音识别，让用户有时间看到提示
+      setTimeout(() => {
+        startSpeechRecognitionForG();
+      }, 500);
+    }
+
+    function hideAll() {
+      [videoA, videoB, videoC, videoE, videoF, videoG].forEach(v => v.classList.remove('video-active'));
+      tip.style.display = 'none';
+      bigWord.style.display = 'none';
+    }
+
+    function showBigWord(word) {
+      console.log('showBigWord called with:', word);
+      bigWord.textContent = word;
+      bigWord.style.display = 'block';
+      bigWord.style.zIndex = '1000';
+      
+      // 根据文字长度调整字体大小
+      if (word.length > 8) {
+        bigWord.style.fontSize = '6rem';
+      } else if (word.length > 4) {
+        bigWord.style.fontSize = '7rem';
+      } else {
+        bigWord.style.fontSize = '8rem';
+      }
+      
+      // 重置动画以确保每次都能播放
+      bigWord.style.animation = 'none';
+      // 强制重绘
+      bigWord.offsetHeight;
+      bigWord.style.animation = 'bigWordPulse 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // 稍快一点
+      
+      console.log('Big word element:', bigWord);
+      console.log('Big word display:', bigWord.style.display);
+      console.log('Big word animation:', bigWord.style.animation);
+      
+      // 2.5秒后开始淡出（稍快一点）
+      setTimeout(() => {
+        bigWord.style.animation = 'bigWordFadeOut 0.4s ease-in forwards';
+        setTimeout(() => {
+          bigWord.style.display = 'none';
+          // 重置字体大小
+          bigWord.style.fontSize = '8rem';
+        }, 400);
+      }, 2000);
+    }
+
+    function initializeSpeechRecognition() {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        tip.textContent = '当前浏览器不支持语音识别，请使用Chrome浏览器。';
+        tip.style.display = 'block';
+        return false;
+      }
+      
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'zh-CN';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1; // 减少备选项以提高速度
+      
+      // 优化响应速度的配置
+      if (recognition.serviceURI !== undefined) {
+        recognition.serviceURI = 'wss://www.google.com/speech-api/v2/recognize'; // 使用更快的服务
+      }
+      
+      // 设置更短的语音检测间隔（如果支持）
+      if ('speechTimeout' in recognition) {
+        recognition.speechTimeout = 500; // 500ms 无声音就停止
+      }
+      if ('audioTimeout' in recognition) {
+        recognition.audioTimeout = 100; // 100ms 检测间隔
+      }
+      
+      // 预先启动一次来获取权限
+      recognition.start();
+      recognition.onstart = function() {
+        recognition.stop(); // 立即停止，只是为了获取权限
+        isRecognitionInitialized = true;
+      };
+      
+      recognition.onerror = function(event) {
+        if (event.error === 'not-allowed') {
+          tip.textContent = '请允许使用麦克风权限以继续游戏。';
+          tip.style.display = 'block';
+        }
+      };
+      
+      return true;
+    }
+
+    function startSpeechRecognition() {
+      if (!isRecognitionInitialized) {
+        tip.textContent = '语音识别未初始化，请重新开始。';
+        return;
+      }
+      
+      let hasTriggeredNext = false; // 防重复触发标志
+      
+      // 清除之前的计时器
+      if (speechTimer) {
+        clearTimeout(speechTimer);
+        speechTimer = null;
+      }
+      
+      // 设置2秒超时计时器
+      speechTimer = setTimeout(() => {
+        console.log('2秒内用户未说积极词汇，触发视频G');
+        if (!hasTriggeredNext && recognition) {
+          hasTriggeredNext = true;
+          recognition.stop();
+          playVideoG();
+        }
+      }, 2000);
+      
+      // 积极正面的关键词列表
+      const positiveWords = [
+        // 基础鼓励词
+        '加油', '努力', '坚持', '勇敢', '冲刺', '奔跑', '前进', '快跑', 
+        '继续', '不放弃', '勇气', '力量', '速度', '超越', '突破', '拼搏',
+        '奋斗', '冲锋', '向前', '挑战', '勇往直前', '永不放弃', '全力以赴',
+        '冲啊', '跑啊', '快点', '赶紧', '冲冲冲', '跑跑跑', '必胜',
+        '成功', '胜利', '厉害', '棒', '好样的', '牛', '强', '猛',
+        
+        // 表扬鼓励词
+        '你真好看', '你真棒', '你很好', '你很棒', '你很厉害', '你好棒',
+        '你真厉害', '你太棒了', '你最棒', '你是最好的', '你很强',
+        '太好了', '太棒了', '太厉害了', '真棒', '真好', '真厉害',
+        '很好', '很棒', '很厉害', '很强', '很牛', '很赞',
+        
+        // 表现肯定词
+        '你已经做的很好了', '你做得很好', '你表现很棒', '你很优秀', '你很出色',
+        '做得非常好', '表现很不错', '你很了不起', '你很完美', '你很精彩',
+        '你很酷', '你很强大', '你很聪明', '你很美丽', '你很帅', '你很可爱',
+        '你很善良', '你很温柔', '你很幽默', '你很有趣', '你很特别', '你很独特',
+        '你很珍贵', '你很重要', '你很有价值', '你很有意义', '你很有潜力',
+        '你很有天赋', '你很有才华', '你很有能力', '你很有魅力', '你很有智慧',
+        '你很有勇气', '你很有毅力', '你很有决心', '你很有信心', '你很有希望',
+        '你很有前途', '你很有未来', '表现出色', '非常优秀', '相当不错',
+        
+        // 催促加速词
+        '跑快点', '快点跑', '再快点', '快一点', '加快速度', '跑起来',
+        '快跑起来', '速度快点', '跑得快点', '更快一点', '飞奔',
+        '飞快跑', '全速前进', '全速奔跑', '狂奔', '疾跑',
+        
+        // 激励动作词
+        '冲刺吧', '奔跑吧', '前进吧', '跑吧', '冲吧', '上吧',
+        '干得好', '做得好', '跑得好', '表现很好', '很不错',
+        '继续保持', '保持节奏', '就是这样', '对了', '很好',
+        
+        // 情感支持词
+        '相信你', '支持你', '为你加油', '你可以的', '你能行',
+        '你一定行', '你最强', '你无敌', '超级棒', '超级好',
+        '非常棒', '非常好', '非常厉害', '极好', '顶级',
+        
+        // 口语化激励
+        '哇', '哇塞', '哇哦', '太赞了', '绝了', '无敌了',
+        '6666', '666', '牛逼', '牛批', '给力', '顶',
+        '赞', '爱了', '绝绝子', '太强了', '无敌',
+        
+        // 安慰解脱类积极词汇
+        '世界只是个草台班子', '都是凡人', '没关系的', '放轻松', '慢慢来',
+        '随缘', '佛系', '看开点', '想开点', '放下吧', '顺其自然',
+        '船到桥头自然直', '车到山前必有路', '天塌下来当被盖',
+        '明天又是新的一天', '一切都会过去的', '这不算什么', '大不了重来',
+        '今天就到这里吧', '差不多得了', '算了算了', '无所谓',
+        '山重水复疑无路柳暗花明又一村', '柳暗花明又一村', '山重水复疑无路',
+        '躺平', '摆烂', '混子', '咸鱼', '划水', '摸鱼',
+        '人间不值得', '世间安得双全法', '凡事都有两面性',
+        '塞翁失马焉知非福', '塞翁失马', '焉知非福', '因祸得福',
+        '吃亏是福', '知足常乐', '比上不足比下有余', '知足吧',
+        '够了够了', '到此为止', '适可而止', '见好就收',
+        '草台班子', '都这样', '正常现象', '习惯就好', '见怪不怪',
+        '人生如戏', '戏如人生', '演戏而已', '别太认真', '游戏人间'
+      ];
+      
+      recognition.onresult = function(event) {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        
+        // 实时显示识别内容
+        const displayText = finalTranscript || interimTranscript;
+        if (displayText) {
+          speechResult.textContent = `你说了："${displayText}"`;
+        }
+        
+        // 检查最终结果和中间结果中是否包含积极词汇（提前响应）
+        const textToCheck = finalTranscript || interimTranscript;
+        if (textToCheck && !hasTriggeredNext) {
+          const matchedWords = positiveWords.filter(word => textToCheck.includes(word));
+          
+          if (matchedWords.length > 0) {
+            hasTriggeredNext = true; // 设置防重复触发标志
+            // 清除超时计时器
+            if (speechTimer) {
+              clearTimeout(speechTimer);
+              speechTimer = null;
+            }
+            // 停止识别
+            recognition.stop();
+            
+            // 记录鼓励话语
+            recordEncouragement(matchedWords, textToCheck);
+            
+            // 显示用户实际说的词汇，优先显示用户说的完整内容中的关键部分
+            let displayWord = matchedWords.join(' '); // 显示所有匹配的关键词
+            if (matchedWords.length === 1) {
+              displayWord = matchedWords[0];
+            } else if (textToCheck.length <= 10) {
+              // 如果用户说的内容很短，直接显示原文
+              displayWord = textToCheck;
+            }
+            
+            showBigWord(displayWord);
+            setTimeout(() => {
+              playVideoB();
+            }, 1200); // 稍微减少延迟
+            return; // 防止重复处理
+          }
+        }
+        
+        // 只有在获得最终结果且没有匹配时才显示提示
+        if (finalTranscript && !positiveWords.some(word => finalTranscript.includes(word))) {
+          setTimeout(() => {
+            speechResult.textContent = '请说一些鼓励、积极的话来为角色加油！';
+            tip.textContent = '说一些鼓励的话，比如"你真棒"、"你已经做的很好了"、"你很厉害"、"跑快点"、"加油"，或者安慰的话比如"你可以的"、"没关系的"、"你很好"等！';
+          }, 1500);
+        }
+      };
+      recognition.onerror = function(event) {
+        tip.textContent = '语音识别出错，请重试。';
+        speechResult.textContent = '语音识别出错，请重试';
+      };
+      recognition.onend = function() {
+        // 如果没有识别到，继续监听
+        if (!videoB.classList.contains('video-active')) {
+          speechResult.textContent = '正在监听...';
+          recognition.start();
+        }
+      };
+      recognition.start();
+    }
+
+    function startSpeechRecognitionForC() {
+      if (!isRecognitionInitialized) {
+        tip.textContent = '语音识别未初始化，请重新开始。';
+        return;
+      }
+      
+      let hasTriggeredNext = false; // 防重复触发标志
+      
+      // 清除之前的计时器
+      if (speechTimer) {
+        clearTimeout(speechTimer);
+        speechTimer = null;
+      }
+      
+      // 设置2秒超时计时器
+      speechTimer = setTimeout(() => {
+        console.log('2秒内用户未说积极词汇触发视频C，播放视频G');
+        if (!hasTriggeredNext && recognition) {
+          hasTriggeredNext = true;
+          recognition.stop();
+          playVideoG();
+        }
+      }, 2000);
+      
+      // 积极正面的关键词列表（和第一个交互相同）
+      const positiveWords = [
+        // 基础鼓励词
+        '加油', '努力', '坚持', '勇敢', '冲刺', '奔跑', '前进', '快跑', 
+        '继续', '不放弃', '勇气', '力量', '速度', '超越', '突破', '拼搏',
+        '奋斗', '冲锋', '向前', '挑战', '勇往直前', '永不放弃', '全力以赴',
+        '冲啊', '跑啊', '快点', '赶紧', '冲冲冲', '跑跑跑', '必胜',
+        '成功', '胜利', '厉害', '棒', '好样的', '牛', '强', '猛',
+        
+        // 表扬鼓励词
+        '你真好看', '你真棒', '你很好', '你很棒', '你很厉害', '你好棒',
+        '你真厉害', '你太棒了', '你最棒', '你是最好的', '你很强',
+        '太好了', '太棒了', '太厉害了', '真棒', '真好', '真厉害',
+        '很好', '很棒', '很厉害', '很强', '很牛', '很赞',
+        
+        // 表现肯定词
+        '你已经做的很好了', '你做得很好', '你表现很棒', '你很优秀', '你很出色',
+        '做得非常好', '表现很不错', '你很了不起', '你很完美', '你很精彩',
+        '你很酷', '你很强大', '你很聪明', '你很美丽', '你很帅', '你很可爱',
+        '你很善良', '你很温柔', '你很幽默', '你很有趣', '你很特别', '你很独特',
+        '你很珍贵', '你很重要', '你很有价值', '你很有意义', '你很有潜力',
+        '你很有天赋', '你很有才华', '你很有能力', '你很有魅力', '你很有智慧',
+        '你很有勇气', '你很有毅力', '你很有决心', '你很有信心', '你很有希望',
+        '你很有前途', '你很有未来', '表现出色', '非常优秀', '相当不错',
+        
+        // 催促加速词
+        '跑快点', '快点跑', '再快点', '快一点', '加快速度', '跑起来',
+        '快跑起来', '速度快点', '跑得快点', '更快一点', '飞奔',
+        '飞快跑', '全速前进', '全速奔跑', '狂奔', '疾跑',
+        
+        // 激励动作词
+        '冲刺吧', '奔跑吧', '前进吧', '跑吧', '冲吧', '上吧',
+        '干得好', '做得好', '跑得好', '表现很好', '很不错',
+        '继续保持', '保持节奏', '就是这样', '对了', '很好',
+        
+        // 情感支持词
+        '相信你', '支持你', '为你加油', '你可以的', '你能行',
+        '你一定行', '你最强', '你无敌', '超级棒', '超级好',
+        '非常棒', '非常好', '非常厉害', '极好', '顶级',
+        
+        // 口语化激励
+        '哇', '哇塞', '哇哦', '太赞了', '绝了', '无敌了',
+        '6666', '666', '牛逼', '牛批', '给力', '顶',
+        '赞', '爱了', '绝绝子', '太强了', '无敌',
+        
+        // 安慰解脱类积极词汇
+        '世界只是个草台班子', '都是凡人', '没关系的', '放轻松', '慢慢来',
+        '随缘', '佛系', '看开点', '想开点', '放下吧', '顺其自然',
+        '船到桥头自然直', '车到山前必有路', '天塌下来当被盖',
+        '明天又是新的一天', '一切都会过去的', '这不算什么', '大不了重来',
+        '今天就到这里吧', '差不多得了', '算了算了', '无所谓',
+        '山重水复疑无路柳暗花明又一村', '柳暗花明又一村', '山重水复疑无路',
+        '躺平', '摆烂', '混子', '咸鱼', '划水', '摸鱼',
+        '人间不值得', '世间安得双全法', '凡事都有两面性',
+        '塞翁失马焉知非福', '塞翁失马', '焉知非福', '因祸得福',
+        '吃亏是福', '知足常乐', '比上不足比下有余', '知足吧',
+        '够了够了', '到此为止', '适可而止', '见好就收',
+        '草台班子', '都这样', '正常现象', '习惯就好', '见怪不怪',
+        '人生如戏', '戏如人生', '演戏而已', '别太认真', '游戏人间'
+      ];
+      
+      recognition.onresult = function(event) {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        
+        // 实时显示识别内容
+        const displayText = finalTranscript || interimTranscript;
+        if (displayText) {
+          speechResult.textContent = `你说了："${displayText}"`;
+        }
+        
+        // 检查最终结果和中间结果中是否包含积极词汇（提前响应）
+        const textToCheck = finalTranscript || interimTranscript;
+        if (textToCheck && !hasTriggeredNext) {
+          const matchedWords = positiveWords.filter(word => textToCheck.includes(word));
+          
+          if (matchedWords.length > 0) {
+            hasTriggeredNext = true; // 设置防重复触发标志
+            hasTriggeredVideoC = true; // 设置标志表示已触发视频C
+            console.log('用户触发了视频C，设置 hasTriggeredVideoC =', hasTriggeredVideoC);
+            // 清除超时计时器
+            if (speechTimer) {
+              clearTimeout(speechTimer);
+              speechTimer = null;
+            }
+            // 停止识别
+            recognition.stop();
+            
+            // 记录鼓励话语
+            recordEncouragement(matchedWords, textToCheck);
+            
+            // 显示用户实际说的词汇，优先显示用户说的完整内容中的关键部分
+            let displayWord = matchedWords.join(' '); // 显示所有匹配的关键词
+            if (matchedWords.length === 1) {
+              displayWord = matchedWords[0];
+            } else if (textToCheck.length <= 10) {
+              // 如果用户说的内容很短，直接显示原文
+              displayWord = textToCheck;
+            }
+            
+            showBigWord(displayWord);
+            setTimeout(() => {
+              playVideoC();
+            }, 1200); // 稍微减少延迟
+            return; // 防止重复处理
+          }
+        }
+        
+        // 只有在获得最终结果且没有匹配时才显示提示
+        if (finalTranscript && !positiveWords.some(word => finalTranscript.includes(word))) {
+          setTimeout(() => {
+            speechResult.textContent = '请说一些鼓励、积极的话来让角色加速！';
+            tip.textContent = '继续说一些鼓励的话，比如"冲刺"、"快跑"、"你真棒"、"你很优秀"、"超越"，或者安慰的话比如"你可以的"、"你很棒"、"没关系"等！';
+          }, 1500);
+        }
+      };
+      recognition.onerror = function(event) {
+        tip.textContent = '语音识别出错，请重试。';
+        speechResult.textContent = '语音识别出错，请重试';
+      };
+      recognition.onend = function() {
+        // 如果没有识别到，且视频B还在播放或者还没触发视频C，继续监听
+        if (!hasTriggeredVideoC && videoB.classList.contains('video-active')) {
+          speechResult.textContent = '正在监听...';
+          recognition.start();
+        }
+      };
+      recognition.start();
+    }
+
+    function startSpeechRecognitionForE() {
+      if (!isRecognitionInitialized) {
+        tip.textContent = '语音识别未初始化，请重新开始。';
+        return;
+      }
+      
+      let hasTriggeredNext = false; // 防重复触发标志
+      
+      recognition.onresult = function(event) {
+        // 如果已经触发过，直接返回，不再处理新的识别结果
+        if (hasTriggeredNext) {
+          return;
+        }
+        
+        let interimTranscript = '';
+        let finalTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        
+        // 实时显示识别内容
+        const displayText = finalTranscript || interimTranscript;
+        if (displayText) {
+          speechResult.textContent = `你说了："${displayText}"`;
+        }
+        
+        // 检查中间结果和最终结果中是否包含"加油"（提前响应）
+        const textToCheck = finalTranscript || interimTranscript;
+        if (!hasTriggeredNext && textToCheck && textToCheck.includes('加油')) {
+          hasTriggeredNext = true; // 设置防重复触发标志
+          hasTriggeredVideoE = true; // 设置标志表示已触发视频E
+          console.log('用户说了"加油"，设置 hasTriggeredVideoE =', hasTriggeredVideoE);
+          
+          // 清除快速触发计时器
+          if (quickTriggerTimer) {
+            clearTimeout(quickTriggerTimer);
+            quickTriggerTimer = null;
+            console.log('用户说了"加油"，取消快速触发计时器');
+          }
+          // 清除语音超时计时器
+          if (speechTimer) {
+            clearTimeout(speechTimer);
+            speechTimer = null;
+          }
+          
+          recognition.stop();
+          
+          // 记录鼓励话语（特殊处理"加油"）
+          recordEncouragement(['加油'], textToCheck);
+          
+          // 显示用户说的内容，如果内容简短就显示原文，否则显示"加油"
+          let displayWord = textToCheck.length <= 8 ? textToCheck : '加油';
+          showBigWord(displayWord);
+          
+          setTimeout(() => {
+            playVideoE();
+          }, 600); // 进一步减少延迟
+        } else if (finalTranscript && !finalTranscript.includes('加油')) {
+          setTimeout(() => {
+            speechResult.textContent = '请说"加油"';
+          }, 1500);
+        }
+      };
+      recognition.onerror = function(event) {
+        tip.textContent = '语音识别出错，请重试。';
+        speechResult.textContent = '语音识别出错，请重试';
+      };
+      recognition.onend = function() {
+        // 如果没有识别到，且视频C还在播放或者还没触发视频E，继续监听
+        if (!hasTriggeredVideoE && videoC.classList.contains('video-active')) {
+          speechResult.textContent = '正在监听...';
+          recognition.start();
+        }
+      };
+      recognition.start();
+    }
+
+    function startSpeechRecognitionForF() {
+      if (!isRecognitionInitialized) {
+        tip.textContent = '语音识别未初始化，请重新开始。';
+        return;
+      }
+      
+      let hasTriggeredNext = false; // 防重复触发标志
+      
+      recognition.onresult = function(event) {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        
+        // 实时显示识别内容
+        const displayText = finalTranscript || interimTranscript;
+        if (displayText) {
+          speechResult.textContent = `你说了："${displayText}"`;
+        }
+        
+        // 检查最终结果和中间结果中是否包含"跳过去"（提前响应）
+        const textToCheck = finalTranscript || interimTranscript;
+        if (!hasTriggeredNext && textToCheck && textToCheck.includes('跳过去')) {
+          hasTriggeredNext = true; // 设置防重复触发标志
+          recognition.stop();
+          
+          // 显示用户说的内容，如果内容简短就显示原文，否则显示"跳过去"
+          let displayWord = textToCheck.length <= 8 ? textToCheck : '跳过去';
+          showBigWord(displayWord);
+          
+          setTimeout(() => {
+            playVideoF();
+          }, 600); // 进一步减少延迟
+          return; // 防止重复处理
+        }
+        
+        // 只有在获得最终结果且没有匹配时才显示提示
+        if (finalTranscript && !finalTranscript.includes('跳过去')) {
+          setTimeout(() => {
+            speechResult.textContent = '请说"跳过去"';
+          }, 1500);
+        }
+      };
+      recognition.onerror = function(event) {
+        tip.textContent = '语音识别出错，请重试。';
+        speechResult.textContent = '语音识别出错，请重试';
+      };
+      recognition.onend = function() {
+        // 如果没有识别到，继续监听
+        if (videoF.classList.contains('video-active') === false) {
+          speechResult.textContent = '正在监听...';
+          recognition.start();
+        }
+      };
+      recognition.start();
+    }
+
+    function startSpeechRecognitionForG() {
+      if (!isRecognitionInitialized) {
+        tip.textContent = '语音识别未初始化，请重新开始。';
+        return;
+      }
+      
+      let hasTriggeredNext = false; // 防重复触发标志
+      
+      // 清除之前的计时器
+      if (speechTimer) {
+        clearTimeout(speechTimer);
+        speechTimer = null;
+      }
+      
+      // 积极正面的关键词列表（和其他交互相同）
+      const positiveWords = [
+        // 基础鼓励词
+        '加油', '努力', '坚持', '勇敢', '冲刺', '奔跑', '前进', '快跑', 
+        '继续', '不放弃', '勇气', '力量', '速度', '超越', '突破', '拼搏',
+        '奋斗', '冲锋', '向前', '挑战', '勇往直前', '永不放弃', '全力以赴',
+        '冲啊', '跑啊', '快点', '赶紧', '冲冲冲', '跑跑跑', '必胜',
+        '成功', '胜利', '厉害', '棒', '好样的', '牛', '强', '猛',
+        
+        // 表扬鼓励词
+        '你真好看', '你真棒', '你很好', '你很棒', '你很厉害', '你好棒',
+        '你真厉害', '你太棒了', '你最棒', '你是最好的', '你很强',
+        '太好了', '太棒了', '太厉害了', '真棒', '真好', '真厉害',
+        '很好', '很棒', '很厉害', '很强', '很牛', '很赞',
+        
+        // 表现肯定词
+        '你已经做的很好了', '你做得很好', '你表现很棒', '你很优秀', '你很出色',
+        '做得非常好', '表现很不错', '你很了不起', '你很完美', '你很精彩',
+        '你很酷', '你很强大', '你很聪明', '你很美丽', '你很帅', '你很可爱',
+        '你很善良', '你很温柔', '你很幽默', '你很有趣', '你很特别', '你很独特',
+        '你很珍贵', '你很重要', '你很有价值', '你很有意义', '你很有潜力',
+        '你很有天赋', '你很有才华', '你很有能力', '你很有魅力', '你很有智慧',
+        '你很有勇气', '你很有毅力', '你很有决心', '你很有信心', '你很有希望',
+        '你很有前途', '你很有未来', '表现出色', '非常优秀', '相当不错',
+        
+        // 催促加速词
+        '跑快点', '快点跑', '再快点', '快一点', '加快速度', '跑起来',
+        '快跑起来', '速度快点', '跑得快点', '更快一点', '飞奔',
+        '飞快跑', '全速前进', '全速奔跑', '狂奔', '疾跑',
+        
+        // 激励动作词
+        '冲刺吧', '奔跑吧', '前进吧', '跑吧', '冲吧', '上吧',
+        '干得好', '做得好', '跑得好', '表现很好', '很不错',
+        '继续保持', '保持节奏', '就是这样', '对了', '很好',
+        
+        // 情感支持词
+        '相信你', '支持你', '为你加油', '你可以的', '你能行',
+        '你一定行', '你最强', '你无敌', '超级棒', '超级好',
+        '非常棒', '非常好', '非常厉害', '极好', '顶级',
+        
+        // 口语化激励
+        '哇', '哇塞', '哇哦', '太赞了', '绝了', '无敌了',
+        '6666', '666', '牛逼', '牛批', '给力', '顶',
+        '赞', '爱了', '绝绝子', '太强了', '无敌',
+        
+        // 安慰解脱类积极词汇
+        '世界只是个草台班子', '都是凡人', '没关系的', '放轻松', '慢慢来',
+        '随缘', '佛系', '看开点', '想开点', '放下吧', '顺其自然',
+        '船到桥头自然直', '车到山前必有路', '天塌下来当被盖',
+        '明天又是新的一天', '一切都会过去的', '这不算什么', '大不了重来',
+        '今天就到这里吧', '差不多得了', '算了算了', '无所谓',
+        '山重水复疑无路柳暗花明又一村', '柳暗花明又一村', '山重水复疑无路',
+        '躺平', '摆烂', '混子', '咸鱼', '划水', '摸鱼',
+        '人间不值得', '世间安得双全法', '凡事都有两面性',
+        '塞翁失马焉知非福', '塞翁失马', '焉知非福', '因祸得福',
+        '吃亏是福', '知足常乐', '比上不足比下有余', '知足吧',
+        '够了够了', '到此为止', '适可而止', '见好就收',
+        '草台班子', '都这样', '正常现象', '习惯就好', '见怪不怪',
+        '人生如戏', '戏如人生', '演戏而已', '别太认真', '游戏人间'
+      ];
+      
+      recognition.onresult = function(event) {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        
+        // 实时显示识别内容
+        const displayText = finalTranscript || interimTranscript;
+        if (displayText) {
+          speechResult.textContent = `你说了："${displayText}"`;
+        }
+        
+        // 检查最终结果和中间结果中是否包含积极词汇（提前响应）
+        const textToCheck = finalTranscript || interimTranscript;
+        if (textToCheck && !hasTriggeredNext) {
+          const matchedWords = positiveWords.filter(word => textToCheck.includes(word));
+          
+          if (matchedWords.length > 0) {
+            hasTriggeredNext = true; // 设置防重复触发标志
+            // 清除超时计时器
+            if (speechTimer) {
+              clearTimeout(speechTimer);
+              speechTimer = null;
+            }
+            // 停止识别
+            recognition.stop();
+            
+            // 记录鼓励话语
+            recordEncouragement(matchedWords, textToCheck);
+            
+            // 显示用户实际说的词汇，优先显示用户说的完整内容中的关键部分
+            let displayWord = matchedWords.join(' '); // 显示所有匹配的关键词
+            if (matchedWords.length === 1) {
+              displayWord = matchedWords[0];
+            } else if (textToCheck.length <= 10) {
+              // 如果用户说的内容很短，直接显示原文
+              displayWord = textToCheck;
+            }
+            
+            showBigWord(displayWord);
+            setTimeout(() => {
+              // 根据当前状态决定下一步：如果是从视频B跳到G的，回到视频B；如果是从视频C跳到G的，回到视频C
+              if (!hasTriggeredVideoC) {
+                // 如果还没触发过视频C，说明是从视频B跳到G的，回到视频B
+                playVideoB();
+              } else {
+                // 如果已经触发过视频C，说明是从视频C跳到G的，回到视频C
+                playVideoC();
+              }
+            }, 1200); // 稍微减少延迟
+            return; // 防止重复处理
+          }
+        }
+        
+        // 只有在获得最终结果且没有匹配时才显示提示
+        if (finalTranscript && !positiveWords.some(word => finalTranscript.includes(word))) {
+          setTimeout(() => {
+            speechResult.textContent = '角色需要你的鼓励！说些积极的话吧！';
+            tip.textContent = '说一些鼓励的话，比如"加油"、"你可以的"、"你已经做的很好了"、"继续跑"、"不要放弃"，或者安慰的话比如"你可以的"、"你很好"、"放轻松"等！';
+          }, 1500);
+        }
+      };
+      recognition.onerror = function(event) {
+        tip.textContent = '语音识别出错，请重试。';
+        speechResult.textContent = '语音识别出错，请重试';
+      };
+      recognition.onend = function() {
+        // 如果没有识别到，继续监听
+        if (videoG.classList.contains('video-active')) {
+          speechResult.textContent = '正在监听...';
+          recognition.start();
+        }
+      };
+      recognition.start();
+    }
+
+    // 预加载所有视频以确保无缝切换
+    function preloadVideos() {
+      [videoA, videoB, videoC, videoE, videoF, videoG].forEach(video => {
+        video.load();
+      });
+    }
+
+
+
+    startBtn.onclick = function() {
+      startBtn.style.display = 'none';
+      // 预加载视频
+      preloadVideos();
+      // 先初始化语音识别获取权限
+      if (initializeSpeechRecognition()) {
+        // 等待一小段时间确保权限获取完成
+        setTimeout(() => {
+          playVideoA();
+        }, 500);
+      }
+    };
+
+    // 处理背景音乐自动播放
+    window.addEventListener('load', function() {
+      const bgMusic = document.getElementById('bgMusic');
+      
+      // 尝试播放音乐
+      const playMusic = function() {
+        bgMusic.play().catch(function(error) {
+          console.log("音乐播放失败:", error);
+        });
+      };
+
+      // 监听用户交互事件来开始播放
+      document.addEventListener('click', function() {
+        playMusic();
+      }, { once: true });
+
+      // 如果音乐暂停了，尝试重新播放
+      bgMusic.addEventListener('pause', function() {
+        playMusic();
+      });
+
+      // 初次尝试自动播放
+      playMusic();
+    });
+
+    // 语音输入面板功能
+    function initializeVoiceInput() {
+      const voiceInputPanel = document.getElementById('voiceInputPanel');
+      const voicePanelClose = document.getElementById('voicePanelClose');
+      const voiceStartBtn = document.getElementById('voiceStartBtn');
+      const voiceStopBtn = document.getElementById('voiceStopBtn');
+      const voiceClearBtn = document.getElementById('voiceClearBtn');
+      const voiceStatus = document.getElementById('voiceStatus');
+      const voiceContent = document.getElementById('voiceContent');
+
+      // 检查浏览器支持
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        return;
+      }
+
+      // 初始化语音识别
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      voiceInputRecognition = new SpeechRecognition();
+      voiceInputRecognition.lang = 'zh-CN';
+      voiceInputRecognition.continuous = true;
+      voiceInputRecognition.interimResults = true;
+      voiceInputRecognition.maxAlternatives = 1;
+
+      // 关闭面板
+      voicePanelClose.addEventListener('click', () => {
+        voiceInputPanel.style.display = 'none';
+        if (isVoiceInputListening) {
+          stopVoiceInput();
+        }
+      });
+
+      // 开始录音
+      voiceStartBtn.addEventListener('click', () => {
+        startVoiceInput();
+      });
+
+      // 停止录音
+      voiceStopBtn.addEventListener('click', () => {
+        stopVoiceInput();
+      });
+
+      // 清除记录
+      voiceClearBtn.addEventListener('click', () => {
+        clearVoiceRecords();
+      });
+
+      // 语音识别事件
+      voiceInputRecognition.onstart = function() {
+        isVoiceInputListening = true;
+        voiceStartBtn.disabled = true;
+        voiceStopBtn.disabled = false;
+        voiceStatus.textContent = '正在录音中...';
+        voiceStatus.classList.add('listening');
+      };
+
+      voiceInputRecognition.onresult = function(event) {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        // 实时显示识别结果
+        if (interimTranscript) {
+          voiceStatus.textContent = `识别中: ${interimTranscript}`;
+        }
+
+        // 保存最终结果
+        if (finalTranscript) {
+          addVoiceRecord(finalTranscript);
+          voiceStatus.textContent = '正在录音中...';
+        }
+      };
+
+      voiceInputRecognition.onend = function() {
+        isVoiceInputListening = false;
+        voiceStartBtn.disabled = false;
+        voiceStopBtn.disabled = true;
+        voiceStatus.textContent = '录音已停止';
+        voiceStatus.classList.remove('listening');
+      };
+
+      voiceInputRecognition.onerror = function(event) {
+        isVoiceInputListening = false;
+        voiceStartBtn.disabled = false;
+        voiceStopBtn.disabled = true;
+        voiceStatus.textContent = `识别错误: ${event.error}`;
+        voiceStatus.classList.remove('listening');
+      };
+
+      function startVoiceInput() {
+        try {
+          voiceInputRecognition.start();
+        } catch (error) {
+          console.error('启动语音识别失败:', error);
+          voiceStatus.textContent = '启动录音失败，请重试';
+        }
+      }
+
+      function stopVoiceInput() {
+        if (isVoiceInputListening) {
+          voiceInputRecognition.stop();
+        }
+      }
+
+      function addVoiceRecord(text) {
+        const timestamp = new Date().toLocaleTimeString();
+        const record = {
+          time: timestamp,
+          content: text.trim()
+        };
+
+        voiceInputRecords.push(record);
+        updateVoiceContent();
+      }
+
+      function updateVoiceContent() {
+        if (voiceInputRecords.length === 0) {
+          voiceContent.innerHTML = '<div style="text-align: center; color: #aaa; font-size: 0.8rem; padding: 20px;">暂无语音记录</div>';
+          return;
+        }
+
+        let html = '';
+        voiceInputRecords.reverse().forEach(record => {
+          html += `
+            <div class="voice-item">
+              <div class="timestamp">${record.time}</div>
+              <div class="content">${record.content}</div>
+            </div>
+          `;
+        });
+        voiceInputRecords.reverse(); // 恢复原顺序
+
+        voiceContent.innerHTML = html;
+        // 滚动到最新记录
+        voiceContent.scrollTop = 0;
+      }
+
+      function clearVoiceRecords() {
+        voiceInputRecords = [];
+        updateVoiceContent();
+        voiceStatus.textContent = '记录已清除';
+      }
+    }
+
+    // 打字输入面板功能
+    function initializeTextInput() {
+      const textInputToggle = document.getElementById('textInputToggle');
+      const textInputArea = document.getElementById('textInputArea');
+      const textInputClose = document.getElementById('textInputClose');
+      const textInputField = document.getElementById('textInputField');
+      const textSendBtn = document.getElementById('textSendBtn');
+      const textClearBtn = document.getElementById('textClearBtn');
+      const textHistory = document.getElementById('textHistory');
+
+      // 切换面板显示
+      textInputToggle.addEventListener('click', () => {
+        if (textInputArea.style.display === 'none' || !textInputArea.style.display) {
+          textInputArea.style.display = 'block';
+          textInputField.focus();
+        } else {
+          textInputArea.style.display = 'none';
+        }
+      });
+
+      // 关闭面板
+      textInputClose.addEventListener('click', () => {
+        textInputArea.style.display = 'none';
+      });
+
+      // 发送文字
+      function sendText() {
+        const text = textInputField.value.trim();
+        if (text) {
+          addTextRecord(text);
+          
+          // 检查文字交互逻辑
+          checkTextInteraction(text);
+          
+          textInputField.value = '';
+          textInputField.focus();
+        }
+      }
+
+      // 检查文字交互逻辑
+      function checkTextInteraction(text) {
+        // 积极正面的关键词列表（与语音交互相同）
+        const positiveWords = [
+          // 基础鼓励词
+          '加油', '努力', '坚持', '勇敢', '冲刺', '奔跑', '前进', '快跑', 
+          '继续', '不放弃', '勇气', '力量', '速度', '超越', '突破', '拼搏',
+          '奋斗', '冲锋', '向前', '挑战', '勇往直前', '永不放弃', '全力以赴',
+          '冲啊', '跑啊', '快点', '赶紧', '冲冲冲', '跑跑跑', '必胜',
+          '成功', '胜利', '厉害', '棒', '好样的', '牛', '强', '猛',
+          
+          // 表扬鼓励词
+          '你真好看', '你真棒', '你很好', '你很棒', '你很厉害', '你好棒',
+          '你真厉害', '你太棒了', '你最棒', '你是最好的', '你很强',
+          '太好了', '太棒了', '太厉害了', '真棒', '真好', '真厉害',
+          '很好', '很棒', '很厉害', '很强', '很牛', '很赞',
+          
+          // 表现肯定词
+          '你已经做的很好了', '你做得很好', '你表现很棒', '你很优秀', '你很出色',
+          '做得非常好', '表现很不错', '你很了不起', '你很完美', '你很精彩',
+          '你很酷', '你很强大', '你很聪明', '你很美丽', '你很帅', '你很可爱',
+          '你很善良', '你很温柔', '你很幽默', '你很有趣', '你很特别', '你很独特',
+          '你很珍贵', '你很重要', '你很有价值', '你很有意义', '你很有潜力',
+          '你很有天赋', '你很有才华', '你很有能力', '你很有魅力', '你很有智慧',
+          '你很有勇气', '你很有毅力', '你很有决心', '你很有信心', '你很有希望',
+          '你很有前途', '你很有未来', '表现出色', '非常优秀', '相当不错',
+          
+          // 催促加速词
+          '跑快点', '快点跑', '再快点', '快一点', '加快速度', '跑起来',
+          '快跑起来', '速度快点', '跑得快点', '更快一点', '飞奔',
+          '飞快跑', '全速前进', '全速奔跑', '狂奔', '疾跑',
+          
+          // 激励动作词
+          '冲刺吧', '奔跑吧', '前进吧', '跑吧', '冲吧', '上吧',
+          '干得好', '做得好', '跑得好', '表现很好', '很不错',
+          '继续保持', '保持节奏', '就是这样', '对了', '很好',
+          
+          // 情感支持词
+          '相信你', '支持你', '为你加油', '你可以的', '你能行',
+          '你一定行', '你最强', '你无敌', '超级棒', '超级好',
+          '非常棒', '非常好', '非常厉害', '极好', '顶级',
+          
+          // 口语化激励
+          '哇', '哇塞', '哇哦', '太赞了', '绝了', '无敌了',
+          '6666', '666', '牛逼', '牛批', '给力', '顶',
+          '赞', '爱了', '绝绝子', '太强了', '无敌',
+          
+          // 安慰解脱类积极词汇
+          '世界只是个草台班子', '都是凡人', '没关系的', '放轻松', '慢慢来',
+          '随缘', '佛系', '看开点', '想开点', '放下吧', '顺其自然',
+          '船到桥头自然直', '车到山前必有路', '天塌下来当被盖',
+          '明天又是新的一天', '一切都会过去的', '这不算什么', '大不了重来',
+          '今天就到这里吧', '差不多得了', '算了算了', '无所谓',
+          '山重水复疑无路柳暗花明又一村', '柳暗花明又一村', '山重水复疑无路',
+          '躺平', '摆烂', '混子', '咸鱼', '划水', '摸鱼',
+          '人间不值得', '世间安得双全法', '凡事都有两面性',
+          '塞翁失马焉知非福', '塞翁失马', '焉知非福', '因祸得福',
+          '吃亏是福', '知足常乐', '比上不足比下有余', '知足吧',
+          '够了够了', '到此为止', '适可而止', '见好就收',
+          '草台班子', '都这样', '正常现象', '习惯就好', '见怪不怪',
+          '人生如戏', '戏如人生', '演戏而已', '别太认真', '游戏人间'
+        ];
+
+        // 检查当前游戏状态并处理文字交互
+        if (videoA.classList.contains('video-active')) {
+          // 视频A播放中，等待积极词汇触发视频B
+          handleTextInteractionForB(text, positiveWords);
+        } else if (videoB.classList.contains('video-active')) {
+          // 视频B播放中，等待积极词汇触发视频C
+          handleTextInteractionForC(text, positiveWords);
+        } else if (videoC.classList.contains('video-active')) {
+          // 视频C播放中，等待"加油"触发视频E
+          handleTextInteractionForE(text);
+        } else if (videoE.classList.contains('video-active')) {
+          // 视频E播放中，等待"跳过去"触发视频F
+          handleTextInteractionForF(text);
+        } else if (videoG.classList.contains('video-active')) {
+          // 视频G播放中，等待积极词汇回到之前的视频
+          handleTextInteractionForG(text, positiveWords);
+        }
+      }
+
+      // 处理视频A到B的文字交互
+      function handleTextInteractionForB(text, positiveWords) {
+        const matchedWords = positiveWords.filter(word => text.includes(word));
+        
+        if (matchedWords.length > 0) {
+          // 停止语音识别（如果正在运行）
+          if (recognition && isRecognitionInitialized) {
+            recognition.stop();
+          }
+          
+          // 清除语音超时计时器
+          if (speechTimer) {
+            clearTimeout(speechTimer);
+            speechTimer = null;
+          }
+          
+          // 记录鼓励话语
+          recordEncouragement(matchedWords, text);
+          
+          // 显示用户输入的关键词
+          let displayWord = matchedWords.join(' ');
+          if (matchedWords.length === 1) {
+            displayWord = matchedWords[0];
+          } else if (text.length <= 10) {
+            displayWord = text;
+          }
+          
+          showBigWord(displayWord);
+          setTimeout(() => {
+            playVideoB();
+          }, 1200);
+        }
+      }
+
+      // 处理视频B到C的文字交互
+      function handleTextInteractionForC(text, positiveWords) {
+        const matchedWords = positiveWords.filter(word => text.includes(word));
+        
+        if (matchedWords.length > 0) {
+          hasTriggeredVideoC = true;
+          
+          // 停止语音识别（如果正在运行）
+          if (recognition && isRecognitionInitialized) {
+            recognition.stop();
+          }
+          
+          // 清除语音超时计时器
+          if (speechTimer) {
+            clearTimeout(speechTimer);
+            speechTimer = null;
+          }
+          
+          // 记录鼓励话语
+          recordEncouragement(matchedWords, text);
+          
+          // 显示用户输入的关键词
+          let displayWord = matchedWords.join(' ');
+          if (matchedWords.length === 1) {
+            displayWord = matchedWords[0];
+          } else if (text.length <= 10) {
+            displayWord = text;
+          }
+          
+          showBigWord(displayWord);
+          setTimeout(() => {
+            playVideoC();
+          }, 1200);
+        }
+      }
+
+      // 处理视频C到E的文字交互
+      function handleTextInteractionForE(text) {
+        if (text.includes('加油')) {
+          hasTriggeredVideoE = true;
+          
+          // 停止语音识别（如果正在运行）
+          if (recognition && isRecognitionInitialized) {
+            recognition.stop();
+          }
+          
+          // 清除快速触发计时器
+          if (quickTriggerTimer) {
+            clearTimeout(quickTriggerTimer);
+            quickTriggerTimer = null;
+          }
+          
+          // 清除语音超时计时器
+          if (speechTimer) {
+            clearTimeout(speechTimer);
+            speechTimer = null;
+          }
+          
+          // 记录鼓励话语
+          recordEncouragement(['加油'], text);
+          
+          // 显示用户输入的内容
+          let displayWord = text.length <= 8 ? text : '加油';
+          showBigWord(displayWord);
+          
+          setTimeout(() => {
+            playVideoE();
+          }, 600);
+        }
+      }
+
+      // 处理视频E到F的文字交互
+      function handleTextInteractionForF(text) {
+        if (text.includes('跳过去')) {
+          // 停止语音识别（如果正在运行）
+          if (recognition && isRecognitionInitialized) {
+            recognition.stop();
+          }
+          
+          // 显示用户输入的内容
+          let displayWord = text.length <= 8 ? text : '跳过去';
+          showBigWord(displayWord);
+          
+          setTimeout(() => {
+            playVideoF();
+          }, 600);
+        }
+      }
+
+      // 处理视频G的文字交互
+      function handleTextInteractionForG(text, positiveWords) {
+        const matchedWords = positiveWords.filter(word => text.includes(word));
+        
+        if (matchedWords.length > 0) {
+          // 停止语音识别（如果正在运行）
+          if (recognition && isRecognitionInitialized) {
+            recognition.stop();
+          }
+          
+          // 清除语音超时计时器
+          if (speechTimer) {
+            clearTimeout(speechTimer);
+            speechTimer = null;
+          }
+          
+          // 记录鼓励话语
+          recordEncouragement(matchedWords, text);
+          
+          // 显示用户输入的关键词
+          let displayWord = matchedWords.join(' ');
+          if (matchedWords.length === 1) {
+            displayWord = matchedWords[0];
+          } else if (text.length <= 10) {
+            displayWord = text;
+          }
+          
+          showBigWord(displayWord);
+          setTimeout(() => {
+            // 根据当前状态决定下一步
+            if (!hasTriggeredVideoC) {
+              playVideoB();
+            } else {
+              playVideoC();
+            }
+          }, 1200);
+        }
+      }
+
+      // 发送按钮点击事件
+      textSendBtn.addEventListener('click', sendText);
+
+      // 回车键发送
+      textInputField.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          sendText();
+        }
+      });
+
+      // 清除记录
+      textClearBtn.addEventListener('click', () => {
+        clearTextRecords();
+      });
+
+      // 添加文字记录
+      function addTextRecord(text) {
+        const timestamp = new Date().toLocaleTimeString();
+        const record = {
+          time: timestamp,
+          content: text
+        };
+
+        textInputRecords.push(record);
+        updateTextHistory();
+      }
+
+      // 更新文字历史显示
+      function updateTextHistory() {
+        if (textInputRecords.length === 0) {
+          textHistory.innerHTML = '<div style="text-align: center; color: #aaa; font-size: 0.8rem; padding: 20px;">暂无文字记录</div>';
+          return;
+        }
+
+        let html = '';
+        // 显示最新的记录在顶部
+        const reversedRecords = [...textInputRecords].reverse();
+        reversedRecords.forEach(record => {
+          html += `
+            <div class="text-item">
+              <div class="timestamp">${record.time}</div>
+              <div class="content">${record.content}</div>
+            </div>
+          `;
+        });
+
+        textHistory.innerHTML = html;
+        // 滚动到顶部显示最新记录
+        textHistory.scrollTop = 0;
+      }
+
+      // 清除文字记录
+      function clearTextRecords() {
+        textInputRecords = [];
+        updateTextHistory();
+        textInputField.focus();
+      }
+    }
+
+    // 页面加载完成后初始化语音输入和打字输入功能
+    window.addEventListener('DOMContentLoaded', () => {
+      initializeVoiceInput();
+      initializeTextInput();
+    });
+  </script>
+</body>
+</html> 
